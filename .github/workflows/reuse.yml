@@ -112,7 +112,7 @@ jobs:
           load: true
           context: .
           builder: ${{ steps.buildx.outputs.name }}
-          file: ./Dockerfile
+          file: src/services/backend/Dockerfile
           tags: ${{ inputs.SERVICE }}:latest,${{ github.event.repository.name }}/${{ inputs.SERVICE }}:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
