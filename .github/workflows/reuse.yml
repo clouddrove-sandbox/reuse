@@ -85,7 +85,7 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -98,10 +98,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      - name: GCP Configuration
-        uses: google-github-actions/auth@v1
+      - name: "GCP Configuration"
+        id: "auth"
+        uses: "google-github-actions/auth@v1"
         with:
-          credentials_json: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+          project_id: "${{ inputs.project_id }}"
 
       - name: Docker Build
         uses: docker/build-push-action@v2
