@@ -113,7 +113,7 @@ jobs:
           context: .
           builder: ${{ steps.buildx.outputs.name }}
           file: src/services/backend/Dockerfile
-          tags: us-central1-docker.pkg.dev/virtual-voyage-423511-d7/cicd-solar/backend:${RUN_NUMBER}
+          tags: us-central1-docker.pkg.dev/virtual-voyage-423511-d7/cicd-solar/backend:${{ github.run_number }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
