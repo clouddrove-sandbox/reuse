@@ -114,8 +114,8 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           file: src/services/backend/Dockerfile
           tags: us-central1-docker.pkg.dev/virtual-voyage-423511-d7/cicd-solar/backend:${{ github.run_number }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          # cache-from: type=local,src=/tmp/.buildx-cache
+          # cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Save service account key as a file
         run: echo '${{ secrets.GCP_CREDENTIALS }}' > gcp_key.json # Single qoute (not double) works after echo
