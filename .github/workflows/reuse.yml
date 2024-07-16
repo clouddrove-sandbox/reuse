@@ -86,7 +86,7 @@ jobs:
 
       - name: "Docker auth"
         run: |
-          gcloud auth configure-docker us-west1-docker.pkg.dev
+          gcloud auth configure-docker us-central1-docker.pkg.dev
           
       - name: Build image
         run: |
