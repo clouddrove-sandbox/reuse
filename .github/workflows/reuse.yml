@@ -96,12 +96,14 @@ jobs:
       - name: Tag Docker image with GitHub Actions run number
         id: tag_image
         run: |
-          IMAGE_TAG=${{ inputs.GAR }}/${{ inputs.docker_img_name }}:${{ github.run_number }}
+          RUN_NUMBER=$(echo ${{ github.run_number }} | cut -c 1-7)
+          IMAGE_TAG=${{ inputs.GAR }}/${{ inputs.docker_img_name }}:${RUN_NUMBER}
           docker tag ${{ inputs.docker_img_name }} ${IMAGE_TAG}
 
       - name: Push Docker image to GAR
         run: |
-          docker push ${{ inputs.GAR }}/${{ inputs.docker_img_name }}:${{ github.run_number }}
+          RUN_NUMBER=$(echo ${{ github.run_number }} | cut -c 1-7)
+          docker push ${{ inputs.GAR }}/${{ inputs.docker_img_name }}:${RUN_NUMBER}
  
       - id: 'deploy'
         uses: 'google-github-actions/deploy-cloudrun@v2.4.1'
