@@ -90,7 +90,7 @@ jobs:
           
       - name: Build image
         run: |
-          docker build -t grafana ./src/services/backend
+          docker build -t ${{ inputs.docker_img_name }} ./src/services/backend
         working-directory: ${{ github.workspace }}
 
       - name: Tag Docker image with GitHub Actions run number
