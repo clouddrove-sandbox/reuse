@@ -7,6 +7,10 @@ on:
         required: false
         type: string
         description: 'Service name'
+      GAR:
+       required: true
+       type: string
+       description: 'Artifact Registry Path'
       env-vars:
         required: false
         type: string
@@ -62,41 +66,16 @@ on:
       GCP_CREDENTIALS:
         required: false
         description: 'GCP credentials'
-      DB_PASS:
-        required: false
-        description: 'GCP posgress sql password'
-      AWS_ACCESS_KEY_ID:
-        required: false
-        description: 'AWS access keys'
-      AWS_SECRET_ACCESS_KEY:
-        required: false
-        description: 'AWS secret keys'
-      LAB_STAGING_TOKEN:
-        required: false
-        description: 'LAB_STAGING_TOKEN'
 
 jobs:
-  # This workflow contains a job called "build_test_push" and "deploy_staging". It runs tests on push, and deploys to staging on pull request to master.
   build_test_push_cloudrun:
     runs-on: ubuntu-latest
     outputs:
       image_id: ${{ steps.push.outputs.image_id }}
     timeout-minutes: 20
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
 
       - name: "GCP Configuration"
         id: "auth"
@@ -105,41 +84,31 @@ jobs:
           credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
           project_id: "${{ inputs.project_id }}"
 
-      - name: Docker Build
-        uses: docker/build-push-action@v2
-        with:
-          push: false
-          load: true
-          context: .
-          builder: ${{ steps.buildx.outputs.name }}
-          file: src/services/backend/Dockerfile
-          tags: us-central1-docker.pkg.dev/virtual-voyage-423511-d7/cicd-solar/backend:${{ github.run_number }}
-          # cache-from: type=local,src=/tmp/.buildx-cache
-          # cache-to: type=local,dest=/tmp/.buildx-cache-new
-
-      - name: Save service account key as a file
-        run: echo '${{ secrets.GCP_CREDENTIALS }}' > gcp_key.json # Single qoute (not double) works after echo
-
-      - name: "Docker images"
-        run: |
-          docker images -a
-
       - name: "Docker auth"
         run: |
           gcloud auth configure-docker us-west1-docker.pkg.dev
-
-      - id: push
-        name: Push image to artifact registry
+          
+      - name: Build image
         run: |
-          export GITHUB_JOB=${{ github.run_number }}
-          ./.github/scripts/cd.sh push
+          docker build -t grafana ./src/services/backend
+        working-directory: ${{ github.workspace }}
 
+      - name: Tag Docker image with GitHub Actions run number
+        id: tag_image
+        run: |
+          IMAGE_TAG=${{ inputs.GAR }}/${{ inputs.docker_img_name }}:${{ github.run_number }}
+          docker tag ${{ inputs.docker_img_name }} ${IMAGE_TAG}
+
+      - name: Push Docker image to GAR
+        run: |
+          docker push ${{ inputs.GAR }}/${{ inputs.docker_img_name }}:${{ github.run_number }}
+ 
       - id: 'deploy'
         uses: 'google-github-actions/deploy-cloudrun@v2.4.1'
         with:
           service: ${{ inputs.service-name }}
           project_id: ${{ inputs.project_id }}
-          image: us-west1-docker.pkg.dev/icardio-internal-project/internal-artifact-registry/${{ inputs.docker_img_name }}:${{ github.run_number }}
+          image: ${{ inputs.GAR }}/${{ inputs.docker_img_name }}:${{ github.run_number }}
           region: "${{ inputs.region }}"
           flags: --cpu=${{ inputs.cpu }} --memory=${{ inputs.memory }} --port=5000 --min-instances=${{ inputs.minimum_instances }} --network=${{ inputs.network_name }} --subnet=${{ inputs.subnet_name }} --allow-unauthenticated
           env_vars: ${{ inputs.cr-vars }}
